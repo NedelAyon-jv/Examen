@@ -1,10 +1,10 @@
 <!-- Contar el tiempo a partir de la carga del juego.
-Tener una temática original.
+Tener una temática original. LISTO
 El juego debe de contener enemigos
 Debe ser original (es decir no copia de un compañero).
 Debe de contar con las frutas que aparecen de manera aleatoria.
 Debe tener sonidos al realizar ciertas acciones: http://sonidosmp3gratis.com/
-Debe tener música ambiental.  -->
+Debe tener música ambiental.  LISTO -->
 
 
 <!DOCTYPE html>
@@ -29,21 +29,26 @@ Debe tener música ambiental.  -->
 
         var adelanto = 450;
         var retroceso = 650;
-        var direction = ""; 
-        var lastDirection = ""; 
+        var direction = "";
+        var lastDirection = "";
         var speed = 6;
-        var score = 0; 
-        var paused = false; 
+        var score = 0;
+        var paused = false;
         const musica = new Audio("sounds/Soundtrack.mp3");
-        // Cuadro negro
-        var Cuadritox = 300;
-        var Cuadritoy = 300;
+        
+
         //Imagen pokemon 
         const img = new Image();
-        img.src = 'Pokemon1.png'; 
+        img.src = 'Pokemon1.png';
+        //Imagen baya
+        const img2 = new Image();
+        img2.src = 'Baya.png';
+
+
         //Soundtrack
-        musica.volume = 0.0;  // Volumen soundtrack 0.3 preff
+        musica.volume = 0.1;  // Volumen soundtrack 0.3 preff
         musica.play();
+        //Sonido de cuando toca una fruta
 
         // Mapaa
         const walls = [
@@ -95,7 +100,7 @@ Debe tener música ambiental.  -->
             { x: 460, y: 210, width: 30, height: 80 },
 
             //Parte superior derecha 
-            { x: 520, y: 110, width: 200, height: 30 },
+            { x: 550, y: 110, width: 200, height: 30 },
             { x: 650, y: 240, width: 200, height: 30 },
             { x: 820, y: 110, width: 30, height: 140 },
 
@@ -103,7 +108,7 @@ Debe tener música ambiental.  -->
             { x: 120, y: 780, width: 100, height: 100 },
 
             //Parte inferior en medio
-            { x: 320, y: 800, width: 320, height: 30 },
+            { x: 350, y: 800, width: 320, height: 30 },
             { x: 460, y: 800, width: 30, height: 80 },
 
             //Parte inferior derecha 
@@ -112,16 +117,47 @@ Debe tener música ambiental.  -->
 
 
 
-         //   { x: 20, y: 400, width: 300, height: 30 },
-           // { x: 250, y: 110, width: 300, height: 30 },
-        // { x: 20, y: 700, width: 300, height: 30 }
+            //   { x: 20, y: 400, width: 300, height: 30 },
+            // { x: 250, y: 110, width: 300, height: 30 },
+            // { x: 20, y: 700, width: 300, height: 30 }
         ];
-
         function getRandomPosition() {
-            return {
-                x: Math.random() * (myCanvas.width - 20),
-                y: Math.random() * (myCanvas.height - 20)
-            };
+            let position;
+            let collisionDetected;
+
+            do {
+                position = {
+                    x: Math.random() * (myCanvas.width - 600),
+                    y: Math.random() * (myCanvas.height - 600)
+                };
+
+            
+                collisionDetected = walls.some(wall =>
+                    position.x < wall.x + wall.width &&
+                    position.x + 30 > wall.x &&  
+                    position.y < wall.y + wall.height &&
+                    position.y + 30 > wall.y
+                );
+
+            } while (collisionDetected); 
+
+            return position;
+        }
+
+        
+        const frutas = [];
+        //Cantidad de bayas yo pondre 25 por mientras
+        for (let i = 0; i < 25; i++) { 
+            frutas.push(getRandomPosition());
+        }
+
+        function detectFruitCollision(fruitX, fruitY) {
+            return (
+                adelanto < fruitX + 15 &&
+                adelanto + 50 > fruitX &&
+                retroceso < fruitY + 15 &&
+                retroceso + 50 > fruitY
+            );
         }
 
         function detectCollision(newx, newy) {
@@ -178,13 +214,15 @@ Debe tener música ambiental.  -->
                         }
                         break;
                 }
-
-                if (detectCuadrito()) {
-                    score++;
-                    const newPosition = getRandomPosition();
-                    Cuadritox = newPosition.x;
-                    Cuadritoy = newPosition.y;
-                }
+                frutas.forEach((fruta, index) => {
+                    if (detectFruitCollision(fruta.x, fruta.y)) {
+                        frutas.splice(index, 1); 
+                        score++; 
+                        const newPosition = getRandomPosition(); 
+                        frutas.push(newPosition);
+                    }
+                });
+               
             }
         }
 
@@ -201,13 +239,17 @@ Debe tener música ambiental.  -->
             // Cuadro verde
             //ctx.fillStyle = "green";
             //ctx.fillRect(adelanto, retroceso, 40, 40);
-            
+
             ctx.drawImage(img, adelanto, retroceso, 40, 40);
 
             // Cuadro negro
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(Cuadritox, Cuadritoy, 15, 15);
-
+           /*  ctx.fillStyle = "yellow";
+            ctx.fillRect(Cuadritox, Cuadritoy, 15, 15); */
+            ctx.fillStyle = "red";
+            frutas.forEach(fruta => {
+                //ctx.fillRect(fruta.x, fruta.y, 30, 30); // Aumentamos el tamaño a 30x30 para que sean visibles
+                ctx.drawImage(img2, fruta.x, fruta.y, 30, 30);
+            });
             ctx.fillStyle = "blue";
             walls.forEach(wall => {
                 ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
@@ -216,7 +258,7 @@ Debe tener música ambiental.  -->
 
             //Pausa
             if (paused) {
-                ctx.fillStyle = "rgba(128, 128, 128, 0.7)"; 
+                ctx.fillStyle = "rgba(128, 128, 128, 0.7)";
                 ctx.fillRect(0, 0, myCanvas.width, myCanvas.height);
 
                 ctx.font = "50px Arial";
