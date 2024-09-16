@@ -1,8 +1,8 @@
 <!-- Contar el tiempo a partir de la carga del juego.
 Tener una temática original. LISTO
-El juego debe de contener enemigos
+El juego debe de contener enemigos en ello 
 Debe ser original (es decir no copia de un compañero).
-Debe de contar con las frutas que aparecen de manera aleatoria.
+Debe de contar con las frutas que aparecen de manera aleatoria. Listo 
 Debe tener sonidos al realizar ciertas acciones: http://sonidosmp3gratis.com/
 Debe tener música ambiental.  LISTO -->
 
@@ -31,6 +31,9 @@ Debe tener música ambiental.  LISTO -->
         var retroceso = 650;
         var direction = "";
         var lastDirection = "";
+        var startTime = 0; 
+        var hasMoved = false;
+        var elapsedTime = 0; 
         var speed = 6;
         var score = 0;
         var paused = false;
@@ -46,7 +49,8 @@ Debe tener música ambiental.  LISTO -->
 
 
         //Soundtrack
-        musica.volume = 0.1;  // Volumen soundtrack 0.3 preff
+        musica.volume = 0.6;  // Volumen soundtrack 0.3 preff
+        musica.play();
         musica.play();
         //Sonido de cuando toca una fruta
 
@@ -178,6 +182,8 @@ Debe tener música ambiental.  LISTO -->
             );
         }
 
+        
+
         function update() {
             if (!paused) {
                 switch (direction) {
@@ -222,6 +228,11 @@ Debe tener música ambiental.  LISTO -->
                         frutas.push(newPosition);
                     }
                 });
+
+                if(!hasMoved && direction !== ""){
+                    hasMoved = true; 
+                    startTime = performance.now();
+                }
                
             }
         }
@@ -234,6 +245,10 @@ Debe tener música ambiental.  LISTO -->
             ctx.fillStyle = "white";
             ctx.fillText("Score: " + score, myCanvas.width - 450, 50);
             // Temporizador
+            if (hasMoved) {
+                elapsedTime = ((performance.now() - startTime) / 1000).toFixed(1);
+                ctx.fillText("Time: " + elapsedTime + "s", myCanvas.width - 450, 100);
+            }
 
 
             // Cuadro verde
@@ -300,10 +315,10 @@ Debe tener música ambiental.  LISTO -->
                         direction = "right";
                         lastDirection = "right";
                         break;
-                    case "p":
+                   /*  case "p":
                     case "P":
                         speed += 2.5;
-                        break;
+                        break; */
                 }
             }
         });
