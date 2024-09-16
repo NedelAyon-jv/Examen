@@ -31,14 +31,14 @@ Debe tener música ambiental.  LISTO -->
         var retroceso = 650;
         var direction = "";
         var lastDirection = "";
-        var startTime = 0; 
+        var startTime = 0;
         var hasMoved = false;
-        var elapsedTime = 0; 
+        var elapsedTime = 0;
         var speed = 6;
         var score = 0;
         var paused = false;
         const musica = new Audio("sounds/Soundtrack.mp3");
-        
+
 
         //Imagen pokemon 
         const img = new Image();
@@ -46,13 +46,25 @@ Debe tener música ambiental.  LISTO -->
         //Imagen baya
         const img2 = new Image();
         img2.src = 'Baya.png';
-
-
+        //Imagen fantasma/pokebola
+        const img3 = new Image();
+        img3.src = 'Pokebola.png'
         //Soundtrack
-        musica.volume = 0.6;  // Volumen soundtrack 0.3 preff
-        musica.play();
+        musica.volume = 0.1;  // Volumen soundtrack 0.3 preff
+        musica.loop = false;
+
+        const musicaClone = musica.cloneNode();
+        musicaClone.play();
         musica.play();
         //Sonido de cuando toca una fruta
+        const fruta = new Audio('sounds/Waka.mp3');
+        fruta.loop = false;
+
+
+        //Sonido de captura o end 
+        const end = new Audio('sounds/captura.mp3')
+
+        var nextLevel = 25; 
 
         // Mapaa
         const walls = [
@@ -135,23 +147,23 @@ Debe tener música ambiental.  LISTO -->
                     y: Math.random() * (myCanvas.height - 600)
                 };
 
-            
+
                 collisionDetected = walls.some(wall =>
                     position.x < wall.x + wall.width &&
-                    position.x + 30 > wall.x &&  
+                    position.x + 30 > wall.x &&
                     position.y < wall.y + wall.height &&
                     position.y + 30 > wall.y
                 );
 
-            } while (collisionDetected); 
+            } while (collisionDetected);
 
             return position;
         }
 
-        
+
         const frutas = [];
         //Cantidad de bayas yo pondre 25 por mientras
-        for (let i = 0; i < 25; i++) { 
+        for (let i = 0; i < 25; i++) {
             frutas.push(getRandomPosition());
         }
 
@@ -173,7 +185,7 @@ Debe tener música ambiental.  LISTO -->
             );
         }
 
-        function detectCuadrito() {
+        function detectCuadrito(adelanto, retroceso, Cuadritox, Cuadritoy) {
             return (
                 adelanto < Cuadritox + 20 &&
                 adelanto + 50 > Cuadritox &&
@@ -182,7 +194,70 @@ Debe tener música ambiental.  LISTO -->
             );
         }
 
-        
+        const enemies = [
+            { x: 300, y: 300, width: 30, height: 30, direction: "right", speed: 5 },
+            { x: 500, y: 400, width: 30, height: 30, direction: "down", speed: 5 },
+            { x: 70, y: 400, width: 30, height: 30, direction: "down", speed: 5 },
+            { x: 800, y: 400, width: 30, height: 30, direction: "down", speed: 5 },
+            { x: 500, y: 750, width: 30, height: 30, direction: "right", speed: 5 },
+            { x: 500, y: 60, width: 30, height: 30, direction: "right", speed: 5 },
+
+        ];
+
+        function moveEnemies() {
+            enemies.forEach(enemy => {
+                let newx = enemy.x;
+                let newy = enemy.y;
+
+                switch (enemy.direction) {
+                    case "right":
+                        newx += enemy.speed;
+                        if (detectCollision(newx, newy)) {
+                            enemy.direction = "left";
+                        }
+                        break;
+                    case "left":
+                        newx -= enemy.speed;
+                        if (detectCollision(newx, newy)) {
+                            enemy.direction = "right";
+                        }
+                        break;
+                    case "down":
+                        newy += enemy.speed;
+                        if (detectCollision(newx, newy)) {
+                            enemy.direction = "up";
+                        }
+                        break;
+                    case "up":
+                        newy -= enemy.speed;
+                        if (detectCollision(newx, newy)) {
+                            enemy.direction = "down";
+                        }
+                        break;
+                }
+
+                enemy.x = newx;
+                enemy.y = newy;
+            });
+        }
+
+        function checkEnemyCollision() {
+            return enemies.some(enemy => detectCuadrito(adelanto, retroceso, enemy.x, enemy.y));
+        }
+
+        function nextLevelSpeeds(){
+            if (score >= nextLevel){
+                speed += 1; 
+                
+                enemies.forEach(enemy => {
+                    enemy.speed += 2;
+                });
+
+                nextLevel += 5; 
+            }
+            
+        }
+
 
         function update() {
             if (!paused) {
@@ -220,20 +295,30 @@ Debe tener música ambiental.  LISTO -->
                         }
                         break;
                 }
-                frutas.forEach((fruta, index) => {
-                    if (detectFruitCollision(fruta.x, fruta.y)) {
-                        frutas.splice(index, 1); 
-                        score++; 
-                        const newPosition = getRandomPosition(); 
+                // Sonido de cuando toca una fruta
+
+                frutas.forEach((frutaItem, index) => {
+                    if (detectFruitCollision(frutaItem.x, frutaItem.y)) {
+                        frutas.splice(index, 1);
+                        score++;
+                        const frutaClone = fruta.cloneNode();
+                        frutaClone.play();
+                        const newPosition = getRandomPosition();
                         frutas.push(newPosition);
                     }
                 });
 
-                if(!hasMoved && direction !== ""){
-                    hasMoved = true; 
+
+                if (!hasMoved && direction !== "") {
+                    hasMoved = true;
                     startTime = performance.now();
                 }
-               
+                moveEnemies();
+
+                if (checkEnemyCollision()) {
+                    alert("Te ha capturado una pokebola, Tu puntuación es: " + score);
+                    paused = true;
+                }
             }
         }
 
@@ -258,8 +343,8 @@ Debe tener música ambiental.  LISTO -->
             ctx.drawImage(img, adelanto, retroceso, 40, 40);
 
             // Cuadro negro
-           /*  ctx.fillStyle = "yellow";
-            ctx.fillRect(Cuadritox, Cuadritoy, 15, 15); */
+            /*  ctx.fillStyle = "yellow";
+             ctx.fillRect(Cuadritox, Cuadritoy, 15, 15); */
             ctx.fillStyle = "red";
             frutas.forEach(fruta => {
                 //ctx.fillRect(fruta.x, fruta.y, 30, 30); // Aumentamos el tamaño a 30x30 para que sean visibles
@@ -270,6 +355,11 @@ Debe tener música ambiental.  LISTO -->
                 ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
             });
 
+            ctx.fillStyle = "gray";
+            enemies.forEach(enemy => {
+                //ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                ctx.drawImage(img3, enemy.x, enemy.y, enemy.width, enemy.height);
+            });
 
             //Pausa
             if (paused) {
@@ -279,6 +369,7 @@ Debe tener música ambiental.  LISTO -->
                 ctx.font = "50px Arial";
                 ctx.fillStyle = "white";
                 ctx.fillText("Pausa", myCanvas.width / 2 - 100, myCanvas.height / 2);
+                ctx.fillText("F5 PARA REINICIAR LA RUN ", myCanvas.width / 2 - 200, myCanvas.height / 4)
             }
 
             update();
@@ -315,10 +406,10 @@ Debe tener música ambiental.  LISTO -->
                         direction = "right";
                         lastDirection = "right";
                         break;
-                   /*  case "p":
-                    case "P":
-                        speed += 2.5;
-                        break; */
+                    /*  case "p":
+                     case "P":
+                         speed += 2.5;
+                         break; */
                 }
             }
         });
